@@ -3,7 +3,26 @@ package auction.simulator;
 import auction.api.Bidder;
 import auction.api.BidderWithDebugInfo;
 
+/**
+ * Utility class to simulate a full auction match between two bidders.
+ * Provides a static method to run a simulation and generate a {@link MatchResult}.
+ */
 public class AuctionSimulator {
+    /**
+     * Runs a full auction between two bidders with the initial QUs and MUs.
+     * <p>
+     * Each round both bidders submit their bids simultaneously. The higher bidder gets 2 QUs.
+     * In case of equal bids both get 1 QU.
+     * The auction continues until all QU are distributed or both bidders run out of money.
+     * </p>
+     *
+     * @param bidder1  The first bidder
+     * @param bidder2  The second bidder
+     * @param quantity Total quantity units (QU) to be auctioned
+     * @param cash     Initial monetary units (MU) for each bidder
+     *
+     * @return MatchResult containing the final outcome
+     */
     public static MatchResult runMatch(Bidder bidder1, Bidder bidder2, int quantity, int cash) {
         bidder1.init(quantity, cash);
         bidder2.init(quantity, cash);
@@ -16,10 +35,8 @@ public class AuctionSimulator {
         int rounds = quantity / 2;
 
         for (int i = 0; i < rounds; i++) {
-            if(getRemainingCash(bidder1, remaining1) == 0 && getRemainingCash(bidder2, remaining2) == 0) break;
-
-            int bid1 = bidder1.placeBid();
-            int bid2 = bidder2.placeBid();
+            int bid1 = Math.min(remaining1, bidder1.placeBid());
+            int bid2 = Math.min(remaining2, bidder2.placeBid());
 
             bidder1.bids(bid1, bid2);
             bidder2.bids(bid2, bid1);
@@ -35,7 +52,7 @@ public class AuctionSimulator {
             remaining2 -= bid2;
         }
 
-        // case when 1 QU left
+        // case if 1 QU left
         if (quantity % 2 != 0) {
             int bid1 = Math.min(remaining1, bidder1.placeBid());
             int bid2 = Math.min(remaining2, bidder2.placeBid());
@@ -66,6 +83,15 @@ public class AuctionSimulator {
         return new MatchResult(units1, units2, remaining1, remaining2, winner);
     }
 
+    /**
+     * Gets the remaining MUs from a bidder using {@link BidderWithDebugInfo}.
+     * If not available, returns the fallback value provided by the simulator.
+     *
+     * @param bidder        the bidder instance
+     * @param fallbackCash  MUs tracked internally by the simulator
+     *
+     * @return remaining cash
+     */
     private static int getRemainingCash(Bidder bidder, int fallbackCash) {
         if (bidder instanceof BidderWithDebugInfo debug) {
             return debug.getRemainingCash();

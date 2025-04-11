@@ -1,6 +1,5 @@
 package auction.impl;
 
-import auction.api.Bidder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
