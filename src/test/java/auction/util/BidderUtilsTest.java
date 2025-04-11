@@ -26,20 +26,36 @@ public class BidderUtilsTest {
     }
 
     @Test
-    public void testCalculateBidDoesNotExceedCash() {
+    public void testBidDoesNotExceedRemainingCash() {
+        int remainingQU = 30;
+        int remainingMU = 8;
+        int initialMU = 100;
+        int currentRound = 3;
+
+        int[] own = {4, 5, 6};
         int[] opponent = {5, 6, 7};
 
-        int bid = BidderUtils.calculateBid(8, 3, opponent, 5);
+        int bid = BidderUtils.calculateBidByGamePhase(
+                remainingQU, remainingMU, initialMU, currentRound, own, opponent
+        );
 
-        assertTrue(bid <= 8, "Bid should not exceed available cash");
+        assertTrue(bid <= remainingMU, "Bid should not exceed available cash");
     }
 
     @Test
-    public void testCalculateBidReactsToOpponentAverage() {
+    public void testBidAdaptsToOpponentLastBid() {
+        int remainingQU = 50;
+        int remainingMU = 50;
+        int initialMU = 100;
+        int currentRound = 3;
+
+        int[] own = {3, 5, 5};
         int[] opponent = {4, 6, 8};
 
-        int bid = BidderUtils.calculateBid(100, 3, opponent, 5);
+        int bid = BidderUtils.calculateBidByGamePhase(
+                remainingQU, remainingMU, initialMU, currentRound, own, opponent
+        );
 
-        assertTrue(bid >= 7, "Bid should be at least opponent avg + 1");
+        assertTrue(bid >= 9, "Bid should be at least last opponent bid + 1 in mid game if losing");
     }
 }

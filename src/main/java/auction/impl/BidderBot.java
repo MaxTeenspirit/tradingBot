@@ -8,6 +8,7 @@ import auction.util.BidderUtils;
  * It bids just a bit higher, than opponent's average to win QUs without spending too many MUs.
  */
 public class BidderBot implements BidderWithDebugInfo {
+    private int initialCash;
     private int remainingQuantity;
     private int remainingCash;
 
@@ -19,6 +20,7 @@ public class BidderBot implements BidderWithDebugInfo {
 
     @Override
     public void init(int quantity, int cash) {
+        this.initialCash = cash;
         this.remainingQuantity = quantity;
         this.remainingCash = cash;
 
@@ -30,17 +32,13 @@ public class BidderBot implements BidderWithDebugInfo {
 
     @Override
     public int placeBid() {
-        if (remainingQuantity <= 0 || remainingCash <= 0) {
-            return 0;
-        }
-
-        int avgBudget = BidderUtils.averageBudgetPerRound(remainingCash, remainingQuantity);
-
-        return BidderUtils.calculateBid(
+        return BidderUtils.calculateBidByGamePhase(
+                remainingQuantity,
                 remainingCash,
+                initialCash,
                 currentRound,
-                opponentBids,
-                avgBudget
+                ownBids,
+                opponentBids
         );
     }
 

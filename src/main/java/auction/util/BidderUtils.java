@@ -36,24 +36,67 @@ public class BidderUtils {
     }
 
     /**
-     * Calculates bot's current bid depending on average budget and opponent's bids
+     * Calculates a bid depending on the MU-based game phase:
+     * Early → cautious,
+     * Mid → adaptive,
+     * Late → aggressive.
+     * Also adjusts based on whether the bot is currently losing.
      *
-     * @param remainingCash bot's MU left
-     * @param currentRound  the round
-     * @param opponentBids  array of bids by opponent
-     * @param avgBudget     bot's average budget per round
-     *
-     * @return bot's current bid
+     * @param remainingQuantity current QU left
+     * @param remainingCash     bot's MU left
+     * @param initialCash       bot's initial MU
+     * @param currentRound      current round number
+     * @param ownBids           own bid history
+     * @param opponentBids      opponent's bid history
+     * @return bid amount
      */
-    public static int calculateBid(int remainingCash, int currentRound, int[] opponentBids, int avgBudget) {
-        int opponentAvg = (currentRound > 0)
-                ? sum(opponentBids, currentRound) / currentRound
-                : avgBudget;
+    public static int calculateBidByGamePhase(
+            int remainingQuantity,
+            int remainingCash,
+            int initialCash,
+            int currentRound,
+            int[] ownBids,
+            int[] opponentBids
+    ) {
+        if (remainingCash <= 0 || remainingQuantity <= 0) return 0;
 
-        int higherThanOpponentBid = opponentAvg + 1;
+        // if auction is short we play all-in
+        if (remainingQuantity <= 3 && currentRound == 0) {
+            return remainingCash;
+        }
 
-        int safeBid = Math.max(avgBudget, higherThanOpponentBid);
+        int averageBudget = averageBudgetPerRound(remainingCash, remainingQuantity);
+        int lastOpponentBid = (currentRound > 0) ? opponentBids[currentRound - 1] : 1;
 
-        return Math.min(remainingCash, safeBid);
+        double muRatio = (double) remainingCash / Math.max(1, initialCash);
+
+        // check if bot is loosing
+        int myWins = 0;
+        int theirWins = 0;
+
+        for (int i = 0; i < currentRound; i++) {
+            if (ownBids[i] > opponentBids[i]) {
+                myWins++;
+            } else if (ownBids[i] < opponentBids[i]) {
+                theirWins++;
+            } else {
+                myWins++;
+                theirWins++;
+            }
+        }
+
+        boolean isLosing = theirWins > myWins;
+
+        if (muRatio > 0.66) {
+            // early game
+            return Math.min(remainingCash, Math.max(1, lastOpponentBid));
+        } else if (muRatio > 0.33) {
+            // mid-game
+            return Math.min(remainingCash, lastOpponentBid + (isLosing ? 3 : 1));
+        } else {
+            // late game
+            return Math.min(remainingCash, averageBudget * (isLosing ? 3 : 2));
+        }
     }
+
 }
