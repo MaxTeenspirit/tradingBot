@@ -4,8 +4,8 @@ import auction.api.BidderWithDebugInfo;
 import auction.util.BidderUtils;
 
 /**
- * The BidderBot adapts his bids to an average opponent's bid.
- * It bids just a bit higher, than opponent's average to win QUs without spending too many MUs.
+ * The BidderBot adapts his bids to the game phase (early, mid, late).
+ * It bids also depending on wined rounds quantity and bids a bit aggressive if it looses.
  */
 public class BidderBot implements BidderWithDebugInfo {
     private int initialCash;
